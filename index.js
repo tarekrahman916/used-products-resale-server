@@ -40,6 +40,18 @@ async function run() {
       .db("laptopStore")
       .collection("categories");
 
+    const verifyAdmin = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query);
+
+      if (user.role !== "admin") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
     //Jwt
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
@@ -58,9 +70,8 @@ async function run() {
 
     // users
 
-    app.get("/users", verifyJwt, async (req, res) => {
+    app.get("/users", verifyJwt, verifyAdmin, async (req, res) => {
       let query = {};
-      const role = req.query.role;
 
       if (role === "seller") {
         query = { role: role };
@@ -88,7 +99,7 @@ async function run() {
   } finally {
   }
 }
-run().catch((err) => console.log(err));
+run().catch((err) => console.log(err.message));
 
 app.get("/", async (req, res) => {
   res.send("Server is running");
