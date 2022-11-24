@@ -1,0 +1,16 @@
+[
+  {
+    "_id": "c588f8b5-784a-425d-be84-17c546702fb8",
+    "colId": "history",
+    "containerId": "",
+    "name": "http://localhost:5000/categories",
+    "url": "http://localhost:5000/categories",
+    "method": "GET",
+    "sortNum": 0,
+    "created": "2022-11-24T06:42:39.800Z",
+    "modified": "2022-11-24T06:42:41.471Z",
+    "headers": [],
+    "params": [],
+    "tests": []
+  }
+]
