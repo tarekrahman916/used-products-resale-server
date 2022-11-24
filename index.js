@@ -23,7 +23,16 @@ async function run() {
       .db("laptopStore")
       .collection("categories");
 
+    app.get("/jwt", async (req, res) => {});
+
     // users
+
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const user = await usersCollection.find(query).toArray();
+      res.send(query);
+    });
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       const result = await usersCollection.insertOne(user);
