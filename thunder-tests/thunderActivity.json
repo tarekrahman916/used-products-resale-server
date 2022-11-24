@@ -4,19 +4,13 @@
     "colId": "history",
     "containerId": "",
     "name": "http://localhost:5000/categories",
-    "url": "http://localhost:5000/users?role=buyer",
+    "url": "http://localhost:5000/users",
     "method": "GET",
     "sortNum": 0,
     "created": "2022-11-24T06:42:39.800Z",
-    "modified": "2022-11-24T11:40:30.300Z",
+    "modified": "2022-11-24T12:33:03.449Z",
     "headers": [],
-    "params": [
-      {
-        "name": "role",
-        "value": "buyer",
-        "isPath": false
-      }
-    ],
+    "params": [],
     "tests": []
   }
 ]
