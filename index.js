@@ -23,12 +23,12 @@ async function run() {
       .db("laptopStore")
       .collection("categories");
 
-    //users
-    // app.post("/users", async (req, res) => {
-    //   const user = req.body;
-    //   const result = await usersCollection.insertOne(user);
-    //   res.send(result);
-    // });
+    // users
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
 
     //all categories
     app.get("/categories", async (req, res) => {
