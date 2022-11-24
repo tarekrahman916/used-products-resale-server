@@ -28,9 +28,18 @@ async function run() {
     // users
 
     app.get("/users", async (req, res) => {
-      const query = {};
+      let query = {};
+      const role = req.query.role;
+
+      if (role === "seller") {
+        query = { role: role };
+      }
+      if (role === "buyer") {
+        query = { role: role };
+      }
+
       const user = await usersCollection.find(query).toArray();
-      res.send(query);
+      res.send(user);
     });
 
     app.post("/users", async (req, res) => {
