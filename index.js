@@ -6,6 +6,8 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 const port = process.env.PORT || 5000;
 
 //Middleware
+app.use(cors());
+app.use(express.json());
 
 const uri = process.env.DB_URL;
 const client = new MongoClient(uri, {
@@ -22,13 +24,13 @@ async function run() {
       .collection("categories");
 
     //users
-    app.post("/users", async (req, res) => {
-      const user = req.body;
-      const result = await usersCollection.insertOne(user);
-      res.send(result);
-    });
+    // app.post("/users", async (req, res) => {
+    //   const user = req.body;
+    //   const result = await usersCollection.insertOne(user);
+    //   res.send(result);
+    // });
 
-    //categories
+    //all categories
     app.get("/categories", async (req, res) => {
       const query = {};
       const categories = await categoriesCollection.find(query).toArray();
