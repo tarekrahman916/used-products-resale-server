@@ -3,7 +3,7 @@ const cors = require("cors");
 const app = express();
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
 
 //Middleware
@@ -39,6 +39,7 @@ async function run() {
     const categoriesCollection = client
       .db("laptopStore")
       .collection("categories");
+    const productsCollection = client.db("laptopStore").collection("products");
 
     const verifyAdmin = async (req, res, next) => {
       const decodedEmail = req.decoded.email;
@@ -71,6 +72,7 @@ async function run() {
     // users
 
     app.get("/users", verifyJwt, verifyAdmin, async (req, res) => {
+      const role = req.query.role;
       let query = {};
 
       if (role === "seller") {
@@ -84,6 +86,20 @@ async function run() {
       res.send(user);
     });
 
+    app.get("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isAdmin: user?.role === "admin" });
+    });
+
+    app.get("/users/seller/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isSeller: user?.role === "seller" });
+    });
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       const result = await usersCollection.insertOne(user);
@@ -95,6 +111,14 @@ async function run() {
       const query = {};
       const categories = await categoriesCollection.find(query).toArray();
       res.send(categories);
+    });
+
+    //products
+    //verify jwt and verify seller
+    app.post("/products", verifyJwt, async (req, res) => {
+      const product = req.body;
+      const result = await productsCollection.insertOne(product);
+      res.send(result);
     });
   } finally {
   }
