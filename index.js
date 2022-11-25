@@ -35,11 +35,13 @@ const verifyJwt = (req, res, next) => {
 
 async function run() {
   try {
+    client.connect();
     const usersCollection = client.db("laptopStore").collection("users");
     const categoriesCollection = client
       .db("laptopStore")
       .collection("categories");
     const productsCollection = client.db("laptopStore").collection("products");
+    const bookingsCollection = client.db("laptopStore").collection("bookings");
 
     const verifyAdmin = async (req, res, next) => {
       const decodedEmail = req.decoded.email;
@@ -86,6 +88,13 @@ async function run() {
       res.send(user);
     });
 
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      res.send(user);
+    });
+
     app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
@@ -98,6 +107,13 @@ async function run() {
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       res.send({ isSeller: user?.role === "seller" });
+    });
+
+    app.get("/users/buyer/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isBuyer: user?.role === "buyer" });
     });
 
     app.post("/users", async (req, res) => {
@@ -114,12 +130,50 @@ async function run() {
     });
 
     //products
+
+    app.get("/bookings", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const bookings = await bookingsCollection.find(query).toArray();
+      res.send(bookings);
+    });
+    app.post("/bookings", async (req, res) => {
+      const booking = req.body;
+      const result = await bookingsCollection.insertOne(booking);
+      res.send(result);
+    });
+
+    app.get("/products", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const products = await productsCollection.find(query).toArray();
+      res.send(products);
+    });
+
+    app.get("/products/categories/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { categoryId: id };
+      const products = await productsCollection.find(query).toArray();
+      res.send(products);
+    });
+
     //verify jwt and verify seller
     app.post("/products", verifyJwt, async (req, res) => {
       const product = req.body;
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
+
+    app.delete("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+
+      const filter = { _id: ObjectId(id) };
+      const result = await productsCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    //bookings
   } finally {
   }
 }
