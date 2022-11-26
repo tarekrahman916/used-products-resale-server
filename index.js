@@ -20,6 +20,7 @@ const client = new MongoClient(uri, {
 
 const verifyJwt = (req, res, next) => {
   const authHeader = req.headers.authorization;
+
   if (!authHeader) {
     return res.status(401).send("Unauthorized access");
   }
@@ -172,6 +173,13 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     // categories
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -202,7 +210,7 @@ async function run() {
     });
 
     //Products
-    app.get("/products", async (req, res) => {
+    app.get("/products", verifyJwt, async (req, res) => {
       let query = {};
 
       const email = req.query.email;
