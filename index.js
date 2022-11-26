@@ -4,6 +4,7 @@ const app = express();
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.STRIPE_SK);
 const port = process.env.PORT || 5000;
 
 //Middleware
@@ -42,6 +43,7 @@ async function run() {
       .collection("categories");
     const productsCollection = client.db("laptopStore").collection("products");
     const bookingsCollection = client.db("laptopStore").collection("bookings");
+    const paymentsCollection = client.db("laptopStore").collection("payments");
 
     const verifyAdmin = async (req, res, next) => {
       const decodedEmail = req.decoded.email;
@@ -69,6 +71,54 @@ async function run() {
       }
       console.log(user);
       res.status(403).send({ accessToken: "" });
+    });
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const booking = req.body;
+      const price = booking.price;
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      const id = payment.bookingId;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const updateResult = await bookingsCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+
+      const productId = payment.productId;
+      const productFilter = { _id: ObjectId(productId) };
+
+      const updatedProduct = {
+        $set: {
+          sold: true,
+          advertise: false,
+        },
+      };
+      const updateProductResult = await productsCollection.updateOne(
+        productFilter,
+        updatedProduct
+      );
+
+      res.send(result);
     });
 
     // users
@@ -122,14 +172,14 @@ async function run() {
       res.send(result);
     });
 
-    //all categories
+    // categories
     app.get("/categories", async (req, res) => {
       const query = {};
       const categories = await categoriesCollection.find(query).toArray();
       res.send(categories);
     });
 
-    //products
+    //Bookings
 
     app.get("/bookings", async (req, res) => {
       const email = req.query.email;
@@ -137,16 +187,35 @@ async function run() {
       const bookings = await bookingsCollection.find(query).toArray();
       res.send(bookings);
     });
+
+    app.get("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const booking = await bookingsCollection.findOne(query);
+      res.send(booking);
+    });
+
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
       const result = await bookingsCollection.insertOne(booking);
       res.send(result);
     });
 
+    //Products
     app.get("/products", async (req, res) => {
+      let query = {};
+
       const email = req.query.email;
-      const query = { email: email };
+      if (email) {
+        query = { email: email };
+      }
+      const advertise = req.query.advertise;
+      if (advertise) {
+        query = { advertise: true };
+      }
+
       const products = await productsCollection.find(query).toArray();
+
       res.send(products);
     });
 
@@ -164,6 +233,24 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/products", async (req, res) => {
+      const id = req.query.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          advertise: true,
+        },
+      };
+
+      const result = await productsCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      res.send(result);
+    });
+
     app.delete("/products/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -172,8 +259,6 @@ async function run() {
       const result = await productsCollection.deleteOne(filter);
       res.send(result);
     });
-
-    //bookings
   } finally {
   }
 }

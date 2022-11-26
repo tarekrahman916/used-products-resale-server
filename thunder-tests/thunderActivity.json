@@ -4,16 +4,16 @@
     "colId": "history",
     "containerId": "",
     "name": "http://localhost:5000/categories",
-    "url": "http://localhost:5000/bookings?email=imarn@mail.com",
+    "url": "http://localhost:5000/products?advertise=true",
     "method": "GET",
     "sortNum": 0,
     "created": "2022-11-24T06:42:39.800Z",
-    "modified": "2022-11-25T14:00:19.415Z",
+    "modified": "2022-11-26T07:15:00.932Z",
     "headers": [],
     "params": [
       {
-        "name": "email",
-        "value": "imarn@mail.com",
+        "name": "advertise",
+        "value": "true",
         "isPath": false
       }
     ],
