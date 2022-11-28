@@ -4,16 +4,16 @@
     "colId": "history",
     "containerId": "",
     "name": "http://localhost:5000/categories",
-    "url": "http://localhost:5000/wishlists?email=urmi@mail.com",
+    "url": "http://localhost:5000/products/report?reported=true",
     "method": "GET",
     "sortNum": 0,
     "created": "2022-11-24T06:42:39.800Z",
-    "modified": "2022-11-27T06:00:24.895Z",
+    "modified": "2022-11-28T06:44:39.947Z",
     "headers": [],
     "params": [
       {
-        "name": "email",
-        "value": "urmi@mail.com",
+        "name": "reported",
+        "value": "true",
         "isPath": false
       }
     ],

@@ -80,11 +80,11 @@ async function run() {
       const user = await usersCollection.findOne(query);
       if (user) {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
-          expiresIn: "1h",
+          expiresIn: "1d",
         });
         return res.send({ accessToken: token });
       }
-      console.log(user);
+
       res.status(403).send({ accessToken: "" });
     });
 
@@ -186,7 +186,7 @@ async function run() {
       const query = { email: user.email };
       const users = await usersCollection.findOne(query);
 
-      if (users.email === user.email) {
+      if (users?.email === user?.email) {
         return;
       }
 
@@ -208,6 +208,7 @@ async function run() {
         updatedDoc,
         options
       );
+
       res.send(result);
     });
 
@@ -216,6 +217,21 @@ async function run() {
       const filter = { _id: ObjectId(id) };
       const result = await usersCollection.deleteOne(filter);
       res.send(result);
+    });
+
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
+          expiresIn: "1h",
+        });
+        return res.send({ accessToken: token });
+      }
+
+      res.status(403).send({ accessToken: "" });
     });
 
     // categories
@@ -249,6 +265,15 @@ async function run() {
 
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
+
+      const query = { email: booking.email, productId: booking.productId };
+      const alreadyBooked = await bookingsCollection.find(query).toArray();
+
+      if (alreadyBooked.length) {
+        const message = `You have already booking ${booking.productName}`;
+        return res.send({ acknowledged: false, message });
+      }
+
       const result = await bookingsCollection.insertOne(booking);
       res.send(result);
     });
@@ -267,7 +292,32 @@ async function run() {
       const id = req.params.id;
       const query = { categoryId: id };
       const products = await productsCollection.find(query).toArray();
-      res.send(products);
+
+      products.forEach(async (p) => {
+        const sellerEmail = p?.email;
+
+        const userQuery = { email: sellerEmail };
+        const user = await usersCollection.findOne(userQuery);
+
+        if (user?.status === "verified") {
+          const filter = { email: user?.email };
+          const options = { upsert: true };
+          const updatedDoc = {
+            $set: {
+              sellerStatus: "verified",
+            },
+          };
+          const result = await productsCollection.updateMany(
+            filter,
+            updatedDoc,
+            options
+          );
+        }
+      });
+
+      const remaining = products.filter((p) => !p.sold);
+
+      res.send(remaining);
     });
 
     app.post("/products", verifyJwt, verifySeller, async (req, res) => {
@@ -296,36 +346,41 @@ async function run() {
 
     app.delete("/products/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
 
       const filter = { _id: ObjectId(id) };
       const result = await productsCollection.deleteOne(filter);
       res.send(result);
     });
 
-    app.get("/products/advertise", async (req, res) => {
+    app.get("/products/advertise", verifyJwt, async (req, res) => {
       const query = { advertise: true };
       const products = await productsCollection.find(query).toArray();
       res.send(products);
     });
 
-    app.get("/wishlists", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
-      const wishlistProducts = await wishlistsCollection.find(query).toArray();
-      res.send(wishlistProducts);
+    app.get("/products/report", async (req, res) => {
+      const reported = req.query.reported;
+      const query = { reported: true };
+      const reportedProducts = await productsCollection.find(query).toArray();
+      res.send(reportedProducts);
     });
 
-    app.post("/wishlists", async (req, res) => {
-      const product = req.body;
-      const result = await wishlistsCollection.insertOne(product);
-      res.send(result);
-    });
-
-    app.delete("/wishlists/:id", async (req, res) => {
+    app.put("/products/report/:id", async (req, res) => {
       const id = req.params.id;
+
       const filter = { _id: ObjectId(id) };
-      const result = await wishlistsCollection.deleteOne(filter);
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          reported: true,
+        },
+      };
+
+      const result = await productsCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
       res.send(result);
     });
   } finally {
