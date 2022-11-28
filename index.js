@@ -45,9 +45,6 @@ async function run() {
     const productsCollection = client.db("laptopStore").collection("products");
     const bookingsCollection = client.db("laptopStore").collection("bookings");
     const paymentsCollection = client.db("laptopStore").collection("payments");
-    const wishlistsCollection = client
-      .db("laptopStore")
-      .collection("wishlists");
 
     const verifyAdmin = async (req, res, next) => {
       const decodedEmail = req.decoded.email;
